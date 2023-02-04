@@ -263,15 +263,21 @@ public class CharacterMovement : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        isOnGround = true;
-        isJumping = false;
-        UnmarkHookPoint(reachableHookPoint);
+        if (!other.isTrigger && other.transform.position.y < transform.position.y)
+        {
+            isOnGround = true;
+            isJumping = false;
+            UnmarkHookPoint(reachableHookPoint);
+        }
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        isOnGround = false;
-        isJumping = true;
+        if (!other.isTrigger && other.transform.position.y < transform.position.y)
+        {
+            isOnGround = false;
+            isJumping = true;
+        }
     }
 
     void NotifyEnterCollisionWithBlock() { }
