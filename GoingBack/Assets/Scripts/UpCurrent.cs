@@ -15,6 +15,9 @@ public class UpCurrent : MonoBehaviour
         if (other.gameObject.tag != "Player")
             return;
         if (other.gameObject.GetComponent<CharacterMovement>().isGliding)
+            Debug.DrawLine(transform.position, other.transform.position, Color.red);
+
+        if (other.gameObject.GetComponent<CharacterMovement>().isGliding)
         {
             if (!_wasGliding && physics == GlydePhysics.StaticAccelerated)
             {
@@ -24,9 +27,7 @@ public class UpCurrent : MonoBehaviour
         }
         else
         {
-            _wasGliding = false;
-            Rigidbody2D rb = other.gameObject.GetComponent<Rigidbody2D>();
-            rb.gravityScale = 1;
+            ClearGlide(other);
         }
     }
 
@@ -37,6 +38,13 @@ public class UpCurrent : MonoBehaviour
         Rigidbody2D rb = other.gameObject.GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
         startVelocity = rb.velocity;
+    }
+
+    void ClearGlide(Collider2D other)
+    {
+        _wasGliding = false;
+        Rigidbody2D rb = other.gameObject.GetComponent<Rigidbody2D>();
+        rb.gravityScale = 1;
     }
 
     void RunPhysics(Collider2D other)
@@ -59,7 +67,7 @@ public class UpCurrent : MonoBehaviour
                 {
                     timeElapsed += Time.deltaTime;
                     Rigidbody2D rb = other.gameObject.GetComponent<Rigidbody2D>();
-                    Vector2 newVelocity = new Vector2(rb.velocity.x, airCurrentSpeed);
+                    Vector2 newVelocity = new Vector2(0, airCurrentSpeed);
                     other.gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.Lerp(startVelocity, newVelocity, timeElapsed / lerpDuration);
                 }
                 break;
@@ -70,7 +78,7 @@ public class UpCurrent : MonoBehaviour
     {
         if (other.gameObject.tag != "Player")
             return;
-        other.gameObject.GetComponent<Rigidbody2D>().gravityScale = 1;
+        ClearGlide(other);
     }
 }
 
