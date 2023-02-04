@@ -3,181 +3,233 @@ using UnityEngine;
 
 public class CharacterMovement : MonoBehaviour
 {
-    enum Direction
+  enum Direction
+  {
+    LEFT,
+    RIGHT
+  }
+
+  // Public Properties
+  public GameObject reachableHookPoint { get; private set; } = null;
+  [SerializeField] public bool canHook { get; private set; } = true;
+  public bool isJumping { get; private set; } = false;
+
+
+  // Private Properties/Fields
+  [SerializeField][Range(1f, 20f)] float movementSpeed = 5f;
+  [SerializeField][Range(1f, 20f)] float jumpSpeed = 10f;
+  [SerializeField] bool canGlide = true;
+  [SerializeField][Range(0f, 5f)] float glideSpeed = 2f;
+  [SerializeField][Range(5f, 50f)] float hookPointThresholdsMax = 25f;
+  [SerializeField][Range(0f, 50f)] float hookPointThresholdsMin = 1f;
+  [SerializeField][Range(0f, 5f)] float hookStrength = 0.5f;
+  Rigidbody2D rbody2d;
+  HookBehaviour hook;
+  float gravityScale;
+
+  HingeJoint2D hinge;
+
+  Direction facing = Direction.LEFT;
+  bool canJump = true;
+
+  // Public Methods
+  public void ResetVelocityForHook()
+  {
+    // rbody2d.velocity = new Vector2(rbody2d.velocity.x, 0);
+    rbody2d.velocity = Vector2.zero;
+  }
+
+  // Private Methods
+
+  // Start is called before the first frame update
+  void Start()
+  {
+    rbody2d = GetComponent<Rigidbody2D>();
+    gravityScale = rbody2d.gravityScale;
+    if (canHook)
     {
-        LEFT,
-        RIGHT
+      hook = transform.Find("Hook").gameObject.GetComponent<HookBehaviour>();
+      hinge = GetComponent<HingeJoint2D>();
     }
+  }
 
-    [SerializeField][Range(1f, 20f)] float movementSpeed = 5f;
-    [SerializeField][Range(1f, 20f)] float jumpSpeed = 10f;
-    [SerializeField] bool canGlide = true;
-    [SerializeField][Range(0f, 5f)] float glideSpeed = 2f;
-    [SerializeField] public bool canHook { get; private set; } = true;
-    [SerializeField][Range(5f, 50f)] float hookPointThresholdsMax = 25f;
-    [SerializeField][Range(0f, 50f)] float hookPointThresholdsMin = 1f;
-    Rigidbody2D rbody2d;
-    public GameObject reachableHookPoint { get; private set; } = null;
-
-    Direction facing = Direction.LEFT;
-    bool canJump = true;
-    bool isJumping = false;
-
-    // Start is called before the first frame update
-    void Start()
+  // Update is called once per frame
+  void Update()
+  {
+    // if hook is attached, then no other movement is allowed
+    if (!canHook || !hook.isHooked)
     {
-        rbody2d = GetComponent<Rigidbody2D>();
+      ProcessMovement();
+      ProcessJumpAndGlide();
     }
-
-    // Update is called once per frame
-    void Update()
+    if (canHook)
     {
-        ProcessMovement();
-        ProcessJumpAndGlide();
-        ProcessHook();
+      ProcessHook();
     }
+  }
 
-    void ProcessHook()
+  void ProcessHook()
+  {
+    if (canHook)
     {
-        UpdateReachableHookPoint();
+      UpdateReachableHookPoint();
+      if (hook.isHooked)
+      {
+        DoHook();
+      }
     }
+  }
 
+  void DoHook()
+  {
+    Vector2 TDirection = (hook.hookedTo.transform.position - transform.position).normalized;
+    var F = TDirection * hookStrength;
 
-    private void ProcessMovement()
+    rbody2d.AddForce(F);
+
+  }
+
+  void ProcessMovement()
+  {
+    float horizontalAxis = Input.GetAxis("Horizontal");
+
+    if (horizontalAxis > 0)
     {
-        float horizontalAxis = Input.GetAxis("Horizontal");
-        transform.position += new Vector3(Time.deltaTime * horizontalAxis * movementSpeed, 0);
-        if (horizontalAxis > 0)
-        {
-            facing = Direction.RIGHT;
-        }
-        else if (horizontalAxis < 0)
-        {
-            facing = Direction.LEFT;
-        }
+      rbody2d.velocity = new Vector3(
+      Mathf.Max(horizontalAxis * movementSpeed, rbody2d.velocity.x),
+       rbody2d.velocity.y);
+      facing = Direction.RIGHT;
     }
-
-    private void ProcessJumpAndGlide()
+    else if (horizontalAxis < 0)
     {
-        if (Input.GetKeyDown(KeyCode.Space) && canJump)
-        {
-            rbody2d.velocity = new Vector2(rbody2d.velocity.x, jumpSpeed);
-            canJump = false;
-            isJumping = true;
-        }
-        else if (Input.GetKey(KeyCode.Space) && canGlide)
-        {
-            if (rbody2d.velocity.y < -glideSpeed)
-            {
-                rbody2d.velocity = new Vector2(rbody2d.velocity.x, -glideSpeed);
-            }
-        }
+      rbody2d.velocity = new Vector3(
+      Mathf.Min(horizontalAxis * movementSpeed, rbody2d.velocity.x),
+       rbody2d.velocity.y);
+      facing = Direction.LEFT;
     }
+  }
 
-    void UpdateReachableHookPoint()
+  void ProcessJumpAndGlide()
+  {
+    if (Input.GetKeyDown(KeyCode.Space) && canJump)
     {
-        var hookPoints = ListAllHooksOrdered();
-        UnmarkHookPoint(reachableHookPoint);
-
-        foreach (var hookPoint in hookPoints)
-        {
-            if (!isReachable(hookPoint))
-            {
-                //then no other hook point will be reachable, since they are ordered from closest to furthest
-                reachableHookPoint = null;
-                return;
-            }
-            if (!isBeyondMinThreshold(hookPoint)) continue;
-            if (!isAbovePlayer(hookPoint)) continue;
-            if (!isInFacingDirection(hookPoint)) continue;
-            if (!NoObstableInbewteen(hookPoint)) continue;
-
-            MarkHookPoint(hookPoint);
-            reachableHookPoint = hookPoint;
-            return;
-
-        }
+      rbody2d.velocity = new Vector2(rbody2d.velocity.x, jumpSpeed);
+      canJump = false;
+      isJumping = true;
     }
-
-    private bool isAbovePlayer(GameObject hookPoint)
+    else if (Input.GetKey(KeyCode.Space) && canGlide)
     {
-        return hookPoint.transform.position.y > transform.position.y;
+      if (rbody2d.velocity.y < -glideSpeed)
+      {
+        rbody2d.velocity = new Vector2(rbody2d.velocity.x, -glideSpeed);
+      }
     }
+  }
 
-    private bool isBeyondMinThreshold(GameObject hookPoint)
-    {
-        var distance = Vector3.Distance(transform.position, hookPoint.transform.position);
-        return distance > hookPointThresholdsMin;
-    }
+  void UpdateReachableHookPoint()
+  {
+    var hookPoints = ListAllHooksOrdered();
+    UnmarkHookPoint(reachableHookPoint);
 
-    private bool NoObstableInbewteen(GameObject hookPoint)
+    foreach (var hookPoint in hookPoints)
     {
-        var direction = hookPoint.transform.position - transform.position;
-        var distance = Vector3.Distance(transform.position, hookPoint.transform.position);
-        var hit = Physics2D.Raycast(transform.position, direction, distance);
-        return hit.collider == null || hit.collider.gameObject == hookPoint;
-    }
+      if (!isReachable(hookPoint))
+      {
+        //then no other hook point will be reachable, since they are ordered from closest to furthest
+        reachableHookPoint = null;
+        return;
+      }
+      if (!isBeyondMinThreshold(hookPoint)) continue;
+      if (!isAbovePlayer(hookPoint)) continue;
+      if (!isInFacingDirection(hookPoint)) continue;
+      if (!NoObstableInbewteen(hookPoint)) continue;
 
-    private bool isInFacingDirection(GameObject hookPoint)
-    {
-        if (facing == Direction.LEFT)
-        {
-            return hookPoint.transform.position.x < transform.position.x;
-        }
-        //if (facing == Direction.RIGHT)
-        return hookPoint.transform.position.x > transform.position.x;
-    }
+      MarkHookPoint(hookPoint);
+      reachableHookPoint = hookPoint;
+      return;
 
-    private void UnmarkHookPoint(GameObject hookPoint)
-    {
-        if (hookPoint != null)
-        {
-            var spriteRenderer = hookPoint.GetComponent<SpriteRenderer>();
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.color = Color.white;
-            }
-        }
     }
-    private void MarkHookPoint(GameObject hookPoint)
-    {
-        if (hookPoint != null)
-        {
-            var spriteRenderer = hookPoint.GetComponent<SpriteRenderer>();
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.color = Color.blue;
-            }
-        }
-    }
+  }
 
-    private bool isReachable(GameObject hookPoint)
-    {
-        return Vector3.Distance(transform.position, hookPoint.transform.position) < hookPointThresholdsMax;
-    }
+  bool isAbovePlayer(GameObject hookPoint)
+  {
+    return hookPoint.transform.position.y > transform.position.y;
+  }
 
-    List<GameObject> ListAllHooksOrdered()
-    {
-        GameObject[] hooksArr = GameObject.FindGameObjectsWithTag("HookPoint");
-        var hooks = new List<GameObject>(hooksArr);
-        hooks.Sort((GameObject hook1, GameObject hook2) =>
-        {
-            var d1 = Vector3.Distance(transform.position, hook1.transform.position);
-            var d2 = Vector3.Distance(transform.position, hook2.transform.position);
-            return d1.CompareTo(d2);
-        });
-        return hooks;
-    }
+  bool isBeyondMinThreshold(GameObject hookPoint)
+  {
+    var distance = Vector3.Distance(transform.position, hookPoint.transform.position);
+    return distance > hookPointThresholdsMin;
+  }
 
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        canJump = true;
-        isJumping = false;
-        UnmarkHookPoint(reachableHookPoint);
-    }
+  bool NoObstableInbewteen(GameObject hookPoint)
+  {
+    var direction = hookPoint.transform.position - transform.position;
+    var distance = Vector3.Distance(transform.position, hookPoint.transform.position);
+    var hit = Physics2D.Raycast(transform.position, direction, distance);
+    return hit.collider == null || hit.collider.gameObject == hookPoint;
+  }
 
-    void NotifyCollisionWithBlock() { }
-    void NotifyExitCollisionWithBlock() { }
+  bool isInFacingDirection(GameObject hookPoint)
+  {
+    if (facing == Direction.LEFT)
+    {
+      return hookPoint.transform.position.x < transform.position.x;
+    }
+    //if (facing == Direction.RIGHT)
+    return hookPoint.transform.position.x > transform.position.x;
+  }
+
+  void UnmarkHookPoint(GameObject hookPoint)
+  {
+    if (hookPoint != null)
+    {
+      var spriteRenderer = hookPoint.GetComponent<SpriteRenderer>();
+      if (spriteRenderer != null)
+      {
+        spriteRenderer.color = Color.white;
+      }
+    }
+  }
+  void MarkHookPoint(GameObject hookPoint)
+  {
+    if (hookPoint != null)
+    {
+      var spriteRenderer = hookPoint.GetComponent<SpriteRenderer>();
+      if (spriteRenderer != null)
+      {
+        spriteRenderer.color = Color.blue;
+      }
+    }
+  }
+
+  bool isReachable(GameObject hookPoint)
+  {
+    return Vector3.Distance(transform.position, hookPoint.transform.position) < hookPointThresholdsMax;
+  }
+
+  List<GameObject> ListAllHooksOrdered()
+  {
+    GameObject[] hooksArr = GameObject.FindGameObjectsWithTag("HookPoint");
+    var hooks = new List<GameObject>(hooksArr);
+    hooks.Sort((GameObject hook1, GameObject hook2) =>
+    {
+      var d1 = Vector3.Distance(transform.position, hook1.transform.position);
+      var d2 = Vector3.Distance(transform.position, hook2.transform.position);
+      return d1.CompareTo(d2);
+    });
+    return hooks;
+  }
+
+  void OnTriggerEnter2D(Collider2D other)
+  {
+    canJump = true;
+    isJumping = false;
+    UnmarkHookPoint(reachableHookPoint);
+  }
+
+  void NotifyCollisionWithBlock() { }
+  void NotifyExitCollisionWithBlock() { }
 
 
 }
