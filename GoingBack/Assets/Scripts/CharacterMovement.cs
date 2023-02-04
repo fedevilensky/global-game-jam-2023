@@ -12,8 +12,6 @@ public class CharacterMovement : MonoBehaviour
 
   // Public Properties
   public Direction facing { get; private set; } = Direction.LEFT;
-
-
   public GameObject reachableHookPoint { get; private set; } = null;
   [SerializeField] public bool canHook { get; private set; } = true;
   public bool isJumping { get; private set; } = false;
@@ -21,12 +19,10 @@ public class CharacterMovement : MonoBehaviour
   public bool isPushingBlock { get; private set; } = false;
   public float jumpCharge { get; private set; } = 0f;
 
+  public bool isGliding { get; private set; } = false;
 
   // Private Properties/Fields
-
-
   [SerializeField][Range(0.5f, 2f)] float jumpChargeRate = 1f;
-
   [SerializeField][Range(1f, 20f)] float movementSpeed = 5f;
   [SerializeField][Range(1f, 20f)] float maxJumpSpeed = 10f;
   [SerializeField] bool canGlide = true;
@@ -37,7 +33,6 @@ public class CharacterMovement : MonoBehaviour
   Rigidbody2D rbody2d;
   HookBehaviour hook;
   float gravityScale;
-
   HingeJoint2D hinge;
 
 
@@ -156,23 +151,29 @@ public class CharacterMovement : MonoBehaviour
     }
     else if (Input.GetKey(KeyCode.Space) && canGlide)
     {
+      isGliding = true;
       if (rbody2d.velocity.y < -glideSpeed)
       {
         rbody2d.velocity = new Vector2(rbody2d.velocity.x, -glideSpeed);
       }
+    }
+    if (Input.GetKeyUp(KeyCode.Space))
+    {
+      isGliding = false;
     }
   }
 
   void UpdateReachableHookPoint()
   {
     var hookPoints = ListAllHooksOrdered();
-    UnmarkHookPoint(reachableHookPoint);
 
     foreach (var hookPoint in hookPoints)
     {
       if (!isReachable(hookPoint))
       {
         //then no other hook point will be reachable, since they are ordered from closest to furthest
+        UnmarkHookPoint(reachableHookPoint);
+
         reachableHookPoint = null;
         return;
       }
@@ -180,9 +181,12 @@ public class CharacterMovement : MonoBehaviour
       if (!isAbovePlayer(hookPoint)) continue;
       if (!isInFacingDirection(hookPoint)) continue;
       if (!NoObstableInbewteen(hookPoint)) continue;
-
-      MarkHookPoint(hookPoint);
-      reachableHookPoint = hookPoint;
+      if (hookPoint != reachableHookPoint)
+      {
+        UnmarkHookPoint(reachableHookPoint);
+        MarkHookPoint(hookPoint);
+        reachableHookPoint = hookPoint;
+      }
       return;
 
     }
@@ -260,15 +264,21 @@ public class CharacterMovement : MonoBehaviour
 
   void OnTriggerEnter2D(Collider2D other)
   {
-    isOnGround = true;
-    isJumping = false;
-    UnmarkHookPoint(reachableHookPoint);
+    if (!other.isTrigger && other.transform.position.y < transform.position.y)
+    {
+      isOnGround = true;
+      isJumping = false;
+      UnmarkHookPoint(reachableHookPoint);
+    }
   }
 
   void OnTriggerExit2D(Collider2D other)
   {
-    isOnGround = false;
-    isJumping = true;
+    if (!other.isTrigger && other.transform.position.y < transform.position.y)
+    {
+      isOnGround = false;
+      isJumping = true;
+    }
   }
 
   void NotifyCollisionWithBlock()
@@ -279,6 +289,4 @@ public class CharacterMovement : MonoBehaviour
   {
     isPushingBlock = false;
   }
-
-
 }
