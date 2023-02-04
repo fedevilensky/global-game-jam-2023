@@ -17,12 +17,12 @@ public class CharacterMovement : MonoBehaviour
     public GameObject reachableHookPoint { get; private set; } = null;
     [SerializeField] public bool canHook { get; private set; } = true;
     public bool isJumping { get; private set; } = false;
-
     public bool isGliding { get; private set; } = false;
+    public float jumpCharge { get; private set; } = 0f;
+    public bool isOnGround { get; private set; } = true;
 
 
     // Private Properties/Fields
-    float jumpCharge = 0f;
 
     [SerializeField][Range(0.5f, 2f)] float jumpChargeRate = 1f;
 
@@ -39,7 +39,6 @@ public class CharacterMovement : MonoBehaviour
 
     HingeJoint2D hinge;
 
-    bool isOnGround = true;
 
     // Public Methods
 
