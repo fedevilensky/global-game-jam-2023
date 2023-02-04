@@ -18,6 +18,8 @@ public class CharacterMovement : MonoBehaviour
     [SerializeField] public bool canHook { get; private set; } = true;
     public bool isJumping { get; private set; } = false;
 
+    public bool isGliding { get; private set; } = false;
+
 
     // Private Properties/Fields
     float jumpCharge = 0f;
@@ -149,10 +151,15 @@ public class CharacterMovement : MonoBehaviour
         }
         else if (Input.GetKey(KeyCode.Space) && canGlide)
         {
+            isGliding = true;
             if (rbody2d.velocity.y < -glideSpeed)
             {
                 rbody2d.velocity = new Vector2(rbody2d.velocity.x, -glideSpeed);
             }
+        }
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            isGliding = false;
         }
     }
 
