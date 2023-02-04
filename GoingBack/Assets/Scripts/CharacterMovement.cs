@@ -4,21 +4,28 @@ using UnityEngine;
 
 public class CharacterMovement : MonoBehaviour
 {
-  enum Direction
+  public enum Direction
   {
     LEFT,
     RIGHT
   }
 
   // Public Properties
+  public Direction facing { get; private set; } = Direction.LEFT;
+
+
   public GameObject reachableHookPoint { get; private set; } = null;
   [SerializeField] public bool canHook { get; private set; } = true;
   public bool isJumping { get; private set; } = false;
 
 
   // Private Properties/Fields
+  float jumpCharge = 0f;
+
+  [SerializeField][Range(0.5f, 2f)] float jumpChargeRate = 1f;
+
   [SerializeField][Range(1f, 20f)] float movementSpeed = 5f;
-  [SerializeField][Range(1f, 20f)] float jumpSpeed = 10f;
+  [SerializeField][Range(1f, 20f)] float maxJumpSpeed = 10f;
   [SerializeField] bool canGlide = true;
   [SerializeField][Range(0f, 5f)] float glideSpeed = 2f;
   [SerializeField][Range(5f, 50f)] float hookPointThresholdsMax = 25f;
@@ -30,7 +37,6 @@ public class CharacterMovement : MonoBehaviour
 
   HingeJoint2D hinge;
 
-  Direction facing = Direction.LEFT;
   bool canJump = true;
 
   // Public Methods
@@ -112,11 +118,20 @@ public class CharacterMovement : MonoBehaviour
 
   void ProcessJumpAndGlide()
   {
-    if (Input.GetKeyDown(KeyCode.Space) && canJump)
+    if (canJump && Input.GetKey(KeyCode.Space))
     {
-      rbody2d.velocity = new Vector2(rbody2d.velocity.x, jumpSpeed);
-      canJump = false;
-      isJumping = true;
+      jumpCharge = Mathf.Min(jumpCharge + Time.deltaTime * maxJumpSpeed / jumpChargeRate, maxJumpSpeed);
+    }
+    if (Input.GetKeyUp(KeyCode.Space) && canJump)
+    {
+      rbody2d.velocity = new Vector2(rbody2d.velocity.x, jumpCharge);
+      jumpCharge = 0f;
+
+      if (jumpCharge > 1f)
+      {
+        canJump = false;
+        isJumping = true;
+      }
     }
     else if (Input.GetKey(KeyCode.Space) && canGlide)
     {
@@ -227,6 +242,12 @@ public class CharacterMovement : MonoBehaviour
     canJump = true;
     isJumping = false;
     UnmarkHookPoint(reachableHookPoint);
+  }
+
+  void OnTriggerExit2D(Collider2D other)
+  {
+    canJump = false;
+    isJumping = true;
   }
 
   void NotifyCollisionWithBlock() { }
