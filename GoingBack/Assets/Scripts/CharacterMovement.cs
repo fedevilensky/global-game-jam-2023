@@ -37,7 +37,7 @@ public class CharacterMovement : MonoBehaviour
 
   HingeJoint2D hinge;
 
-  bool canJump = true;
+  bool isOnGround = true;
 
   // Public Methods
   public void ResetVelocityForHook()
@@ -102,34 +102,53 @@ public class CharacterMovement : MonoBehaviour
 
     if (horizontalAxis > 0)
     {
-      rbody2d.velocity = new Vector3(
-      Mathf.Max(horizontalAxis * movementSpeed, rbody2d.velocity.x),
+      if (isOnGround)
+      {
+        rbody2d.velocity = new Vector3(
+      horizontalAxis * movementSpeed,
        rbody2d.velocity.y);
+      }
+      else
+      {
+        rbody2d.velocity = new Vector3(
+        Mathf.Max(horizontalAxis * movementSpeed, rbody2d.velocity.x),
+         rbody2d.velocity.y);
+      }
       facing = Direction.RIGHT;
     }
     else if (horizontalAxis < 0)
     {
-      rbody2d.velocity = new Vector3(
-      Mathf.Min(horizontalAxis * movementSpeed, rbody2d.velocity.x),
-       rbody2d.velocity.y);
+      if (isOnGround)
+      {
+        rbody2d.velocity = new Vector3(
+          horizontalAxis * movementSpeed,
+          rbody2d.velocity.y
+        );
+      }
+      else
+      {
+        rbody2d.velocity = new Vector3(
+        Mathf.Min(horizontalAxis * movementSpeed, rbody2d.velocity.x),
+         rbody2d.velocity.y);
+      }
       facing = Direction.LEFT;
     }
   }
 
   void ProcessJumpAndGlide()
   {
-    if (canJump && Input.GetKey(KeyCode.Space))
+    if (isOnGround && Input.GetKey(KeyCode.Space))
     {
       jumpCharge = Mathf.Min(jumpCharge + Time.deltaTime * maxJumpSpeed / jumpChargeRate, maxJumpSpeed);
     }
-    if (Input.GetKeyUp(KeyCode.Space) && canJump)
+    if (Input.GetKeyUp(KeyCode.Space) && isOnGround)
     {
       rbody2d.velocity = new Vector2(rbody2d.velocity.x, jumpCharge);
       jumpCharge = 0f;
 
       if (jumpCharge > 1f)
       {
-        canJump = false;
+        isOnGround = false;
         isJumping = true;
       }
     }
@@ -239,14 +258,14 @@ public class CharacterMovement : MonoBehaviour
 
   void OnTriggerEnter2D(Collider2D other)
   {
-    canJump = true;
+    isOnGround = true;
     isJumping = false;
     UnmarkHookPoint(reachableHookPoint);
   }
 
   void OnTriggerExit2D(Collider2D other)
   {
-    canJump = false;
+    isOnGround = false;
     isJumping = true;
   }
 
