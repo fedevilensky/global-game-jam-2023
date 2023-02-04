@@ -18,6 +18,7 @@ public class CharacterMovement : MonoBehaviour
   [SerializeField] public bool canHook { get; private set; } = true;
   public bool isJumping { get; private set; } = false;
   public bool isOnGround { get; private set; } = true;
+  public bool isPushingBlock { get; private set; } = false;
   public float jumpCharge { get; private set; } = 0f;
 
 
@@ -270,8 +271,14 @@ public class CharacterMovement : MonoBehaviour
     isJumping = true;
   }
 
-  void NotifyCollisionWithBlock() { }
-  void NotifyExitCollisionWithBlock() { }
+  void NotifyCollisionWithBlock()
+  {
+    isPushingBlock = true;
+  }
+  void NotifyExitCollisionWithBlock()
+  {
+    isPushingBlock = false;
+  }
 
 
 }
