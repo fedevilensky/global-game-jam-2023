@@ -159,13 +159,14 @@ public class CharacterMovement : MonoBehaviour
     void UpdateReachableHookPoint()
     {
         var hookPoints = ListAllHooksOrdered();
-        UnmarkHookPoint(reachableHookPoint);
 
         foreach (var hookPoint in hookPoints)
         {
             if (!isReachable(hookPoint))
             {
                 //then no other hook point will be reachable, since they are ordered from closest to furthest
+                UnmarkHookPoint(reachableHookPoint);
+
                 reachableHookPoint = null;
                 return;
             }
@@ -173,9 +174,12 @@ public class CharacterMovement : MonoBehaviour
             if (!isAbovePlayer(hookPoint)) continue;
             if (!isInFacingDirection(hookPoint)) continue;
             if (!NoObstableInbewteen(hookPoint)) continue;
-
-            MarkHookPoint(hookPoint);
-            reachableHookPoint = hookPoint;
+            if (hookPoint != reachableHookPoint)
+            {
+                UnmarkHookPoint(reachableHookPoint);
+                MarkHookPoint(hookPoint);
+                reachableHookPoint = hookPoint;
+            }
             return;
 
         }
@@ -263,4 +267,7 @@ public class CharacterMovement : MonoBehaviour
         isOnGround = false;
         isJumping = true;
     }
+
+    void NotifyEnterCollisionWithBlock() { }
+    void NotifyExitCollisionWithBlock() { }
 }
