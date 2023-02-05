@@ -7,25 +7,13 @@ public class GrapplingHook : MonoBehaviour
 
     [SerializeField] CharacterMovement characterMovement;
 
-    [Header("Layers Settings:")]
-    [SerializeField] private bool grappleToAll = false;
-    [SerializeField] private int grappableLayerNumber = 9;
-
-    [Header("Main Camera:")]
-    public Camera m_camera;
-
     [Header("Transform Ref:")]
     public Transform gunHolder;
-    public Transform gunPivot;
     public Transform firePoint;
 
     [Header("Physics Ref:")]
     public SpringJoint2D m_springJoint2D;
     public Rigidbody2D m_rigidbody;
-
-    [Header("Rotation:")]
-    [SerializeField] private bool rotateOverTime = true;
-    [Range(0, 60)][SerializeField] private float rotationSpeed = 4;
 
     [Header("Distance:")]
     [SerializeField] private bool hasMaxDistance = false;
