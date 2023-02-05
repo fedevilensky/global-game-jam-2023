@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 public class CharacterMovement : MonoBehaviour
 {
@@ -232,9 +233,9 @@ public class CharacterMovement : MonoBehaviour
     return hooks;
   }
 
-  void OnTriggerEnter2D(Collider2D other)
+  void OnTriggerStay2D(Collider2D other)
   {
-    if (!other.isTrigger && other.transform.position.y < transform.position.y)
+    if (other.CompareTag("Floor"))
     {
       isOnGround = true;
       isJumping = false;
@@ -244,7 +245,7 @@ public class CharacterMovement : MonoBehaviour
 
   void OnTriggerExit2D(Collider2D other)
   {
-    if (!other.isTrigger && other.transform.position.y < transform.position.y)
+    if (other.CompareTag("Floor"))
     {
       isOnGround = false;
       isJumping = true;
@@ -262,9 +263,18 @@ public class CharacterMovement : MonoBehaviour
 
   void OnDrawGizmos()
   {
-    Gizmos.color = Color.red;
-    Gizmos.DrawWireSphere(transform.position, hookPointThresholdsMin);
-    Gizmos.color = Color.green;
-    Gizmos.DrawWireSphere(transform.position, hookPointThresholdsMax);
+    // Gizmos.color = Color.red;
+    // Gizmos.DrawWireSphere(transform.position, hookPointThresholdsMin);
+    // Gizmos.color = Color.green;
+    // Gizmos.DrawWireSphere(transform.position, hookPointThresholdsMax);
+    Handles.color = Color.red;
+    if (isOnGround)
+    {
+      Handles.Label(transform.position + new Vector3(0, 1), "On ground");
+    }
+    else
+    {
+      Handles.Label(transform.position + new Vector3(0, 1), "On Air");
+    }
   }
 }

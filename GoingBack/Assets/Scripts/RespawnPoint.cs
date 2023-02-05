@@ -11,7 +11,7 @@ public class RespawnPoint : MonoBehaviour
     gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
   }
 
-  void OnTriggerEnter2D(Collider other)
+  void OnTriggerEnter2D(Collider2D other)
   {
     if (other.gameObject.tag == "Player")
     {
