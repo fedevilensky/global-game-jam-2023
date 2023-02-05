@@ -9,8 +9,9 @@ public class PolaroidEvent : MonoBehaviour
 {
     [SerializeField] private GameObject polaroid;
     [SerializeField] private GameObject backgroundGO;
+    [SerializeField] private int nextLevel = 2;
     private Image background;
-    
+
     private Animator eventAnimator;
     private Animator imageAnimator;
     private void Start()
@@ -26,7 +27,7 @@ public class PolaroidEvent : MonoBehaviour
     private void GetPolaroid()
     {
         if (background) background.enabled = true;
-        
+
         eventAnimator.SetBool("Active", true);
         StartCoroutine(StartEvent());
     }
@@ -36,6 +37,6 @@ public class PolaroidEvent : MonoBehaviour
         yield return new WaitForSeconds(2f);
         imageAnimator.SetBool("Shown", true);
         yield return new WaitForSeconds(5f);
-        SceneManager.LoadScene(2); //Loads second level
+        SceneManager.LoadScene(nextLevel); //Loads second level
     }
 }
