@@ -8,7 +8,6 @@ public class Cookie : MonoBehaviour
     [SerializeField] private float animationDuration;
     [SerializeField] private float animDelay; // Delay from going up to down.
 	private float timer;
-    private float startTime;
 
     private void Start()
     {

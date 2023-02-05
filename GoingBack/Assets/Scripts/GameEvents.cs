@@ -16,6 +16,18 @@ public class GameEvents : MonoBehaviour
     {
         onPlayerGetsCookie?.Invoke();
     }
-    
-    
+
+    public event Action onPlayerDies;
+
+    public void PlayerDies()
+    {
+        onPlayerDies?.Invoke();
+    }
+
+    public event Action onGetsPolaroid;
+
+    public void GetsPolaroid()
+    {
+        onGetsPolaroid?.Invoke();
+    }
 }
