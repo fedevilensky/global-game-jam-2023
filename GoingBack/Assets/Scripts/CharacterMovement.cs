@@ -29,9 +29,7 @@ public class CharacterMovement : MonoBehaviour
     [SerializeField][Range(0f, 5f)] float glideSpeed = 2f;
     [SerializeField][Range(5f, 50f)] float hookPointThresholdsMax = 25f;
     [SerializeField][Range(0f, 50f)] float hookPointThresholdsMin = 1f;
-    [SerializeField][Range(0f, 5f)] float hookStrength = 0.5f;
     Rigidbody2D rbody2d;
-    HookBehaviour hook;
     float gravityScale;
     HingeJoint2D hinge;
 
@@ -50,48 +48,18 @@ public class CharacterMovement : MonoBehaviour
     {
         rbody2d = GetComponent<Rigidbody2D>();
         gravityScale = rbody2d.gravityScale;
-        if (canHook)
-        {
-            hook = transform.Find("Hook").gameObject.GetComponent<HookBehaviour>();
-            hinge = GetComponent<HingeJoint2D>();
-        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        // if hook is attached, then no other movement is allowed
-        if (!canHook || !hook.isHooked)
-        {
-            ProcessMovement();
-            ProcessJumpAndGlide();
-        }
+        ProcessMovement();
+        ProcessJumpAndGlide();
+
         if (canHook)
         {
             UpdateReachableHookPoint();
-            // FindReachableHook();
         }
-    }
-
-    // void FindReachableHook()
-    // {
-    //     if (canHook)
-    //     {
-
-    //         if (hook.isHooked)
-    //         {
-    //             DoHook();
-    //         }
-    //     }
-    // }
-
-    void DoHook()
-    {
-        Vector2 TDirection = (hook.hookedTo.transform.position - transform.position).normalized;
-        var F = TDirection * hookStrength;
-
-        rbody2d.AddForce(F);
-
     }
 
     void ProcessMovement()
