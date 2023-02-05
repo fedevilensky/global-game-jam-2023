@@ -8,6 +8,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject cookieUI;
     private Image cookieSprite;
     private Animator animator;
+    private AudioSource cookieAudio;
     [SerializeField] private Sprite[] cookieStates;
 
     private void Start()
@@ -17,6 +18,7 @@ public class UIManager : MonoBehaviour
         GameEvents.current.onPlayerGetsCookie += UpdateCookies;
         cookieSprite = cookieUI.GetComponent<Image>();
         animator = cookieUI.GetComponent<Animator>();
+        cookieAudio = cookieUI.GetComponent<AudioSource>();
     }
 
     private void UpdateCookies()
@@ -26,10 +28,9 @@ public class UIManager : MonoBehaviour
         if (currentCookies < 5) currentCookies++;
 
         if (currentCookies == 1) cookieSprite.enabled = true;
-        else
-        {
-            cookieSprite.sprite = cookieStates[currentCookies - 1];
-        }
+        else cookieSprite.sprite = cookieStates[currentCookies - 1];
+        
+        if (cookieAudio) cookieAudio.Play();
     }
 
     private IEnumerator AnimateCookieCounter()

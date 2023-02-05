@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class FallDeath : MonoBehaviour
 {
-
   GameManager gameManager;
+  private AudioSource audioClip;
 
-  void Start()
+void Start()
   {
     gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+    audioClip = this.GetComponent<AudioSource>();
   }
 
   void OnTriggerEnter2D(Collider2D other)
@@ -17,6 +18,7 @@ public class FallDeath : MonoBehaviour
     if (other.gameObject.tag == "Player")
     {
       gameManager.RespawnPlayer();
+      if (audioClip) audioClip.Play();
     }
   }
 }
